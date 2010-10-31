@@ -9,7 +9,7 @@ sum: 917504000
 CPU time seconds: 0.195225
 ## fast:
 sum: 917504000
-CPU time seconds: 0.050408
+CPU time seconds: 0.050273
 */
 
 import java.nio.*;
@@ -60,7 +60,7 @@ public class arrayMult
             int[] arr = buf.array();
             
             cputimenanos = getCpuTimeNanos();
-            for( int i = 0; i < length; ++i )
+            for( int i = 0; i < arr.length; ++i )
             {
                 arr[i] *= .7;
             }
