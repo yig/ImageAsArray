@@ -3,6 +3,13 @@ javac arrayMult.java
 # 50 MB = 50*1024*1024/4 = 13107200
 java -classpath . arrayMult 13107200 slow
 java -classpath . arrayMult 13107200 fast
+
+## slow:
+sum: 917504000
+CPU time seconds: 0.195225
+## fast:
+sum: 917504000
+CPU time seconds: 0.050408
 */
 
 import java.nio.*;
@@ -33,15 +40,14 @@ public class arrayMult
         if( "slow".equals( args[1] ) ) slow = true;
         System.out.println( "Slow: " + slow );
         
-        long cputimenanos = 0;
+        for( int i = 0; i < length; ++i )
+        {
+            buf.put( i, 100 );
+        }
         
+        long cputimenanos = 0;
         if( slow )
         {
-            for( int i = 0; i < length; ++i )
-            {
-                buf.put( i, 100 );
-            }
-            
             cputimenanos = getCpuTimeNanos();
             for( int i = 0; i < length; ++i )
             {
@@ -52,10 +58,6 @@ public class arrayMult
         else
         {
             int[] arr = buf.array();
-            for( int i = 0; i < length; ++i )
-            {
-                arr[i] = 100;
-            }
             
             cputimenanos = getCpuTimeNanos();
             for( int i = 0; i < length; ++i )
@@ -64,6 +66,15 @@ public class arrayMult
             }
             cputimenanos = getCpuTimeNanos() - cputimenanos;
         }
+        
+        // So that the above can't be optimized away.
+        // UPDATE: Didn't make a difference.
+        long sum = 0;
+        for( int i = 0; i < length; ++i )
+        {
+            sum += buf.get(i);
+        }
+        System.out.println( "sum: " + sum );
         
         System.out.println( "CPU time nanos: " + cputimenanos );
         
