@@ -1,59 +1,135 @@
+// I, Yotam Gingold, the author of this file, release it to the public domain.
+
 /*
 javac ImageAsArray.java
-java -classpath . ImageAsArray
+java -classpath . ImageAsArray input.png output.png
 */
 
 import java.nio.*; // IntBuffer, ByteBuffer
+
 import java.lang.management.*; // getCPUTimeNanos()
-import java.text.*; // DecimalFormat
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.imageio.ImageIO;
-import java.util.regex;
 
 public class ImageAsArray
 {
-    // http://nadeausoftware.com/articles/2008/03/java_tip_how_get_cpu_and_user_time_benchmarking
-    public static long getCPUTimeNanos( ) {
-        ThreadMXBean bean = ManagementFactory.getThreadMXBean( );
-        return bean.isCurrentThreadCpuTimeSupported( ) ?
-            bean.getCurrentThreadCpuTime( ) : 0L;
+    // From http://nadeausoftware.com/articles/2008/03/java_tip_how_get_cpu_and_user_time_benchmarking
+    public static long getCPUTimeNanos()
+    {
+        ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+        return
+            bean.isCurrentThreadCpuTimeSupported()
+            ? bean.getCurrentThreadCpuTime()
+            : 0L
+            ;
+    }
+    public static double getCPUTimeSeconds()
+    {
+        return (double)getCPUTimeNanos() * 1e-9;
+    }
+    
+    // Behaves like the python os.path.splitext() function.
+    public static String [] SplitExt( String path )
+    {
+        String [] result = new String[2];
+        
+        int split_dot = path.lastIndexOf( "." );
+        int split_slash = path.lastIndexOf( System.getProperty("file.separator") );
+        if( -1 != split_dot && (-1 == split_slash || split_slash < split_dot) )
+        {
+            result[0] = path.substring( 0, split_dot );
+            result[1] = path.substring( split_dot );
+        }
+        else
+        {
+            result[0] = path;
+            result[1] = "";
+        }
+        
+        return result;
     }
     
     /*
-    Given an input path 'path',
-    returns a 
+    Given an input String representing a filesystem path 'path',
+    returns a new path based off of 'path' such that nothing
+    exists at the return 'path'.  This is done by appending
+    a number to the end of the filename.
+    
+    NOTE: This works for files or directories.
     */
     public static String UniquePath( String path )
     {
-        int startingNumber = 1;
-        String suffix = "";
+        // Removing trailing slashes, in case this is a path to a directory, not a file.
+        path = path.replaceAll( System.getProperty("file.separator") + "*$", "" );
         
-        {
-            regex.Pattern endPattern = regex.Pattern.compile( "( [0-9]+)?.[a-zA-Z0-9]+$" );
-            regex.Matcher endMatcher = endPattern.matches( path );
-            if( endMatcher.find() )
-            {
-                
-            }
-        }
+        int count = 1;
+        String [] original_path_splitext = SplitExt( path );
         
         while( new File( path ).exists() )
         {
-            
+            path = original_path_splitext[0] + " " + count + original_path_splitext[1];
+            count += 1;
+        }
+        
+        return path;
+    }
+    
+    public static class ImageAsArrayHolder
+    {
+        public int width;
+        public int height;
+        
+        public byte [] pixels_argb;
+        
+        public ImageAsArrayHolder()
+        {
+            width = -1;
+            height = -1;
         }
     }
-    
-    public static byte[] LoadImageAsByteArray( String path )
-    {
-        BufferedImage image = ImageIO.read( new File( path ) );
-    }
-    
-    public static void SaveImageFromByteArray( byte[], String path )
+    public static ImageAsArrayHolder LoadImageAsByteArrayARGB( String path )
     throws java.io.IOException
     {
+        System.err.println( "[Loading image from \"" + path + "\"]" );
+        
+        ImageAsArrayHolder result = new ImageAsArrayHolder();
+        
+        // Load the image file.
+        BufferedImage image = ImageIO.read( new File( path ) );
+        int int_pixels_argb [] = image.getRGB( 0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth() );
+        
+        result.width = image.getWidth();
+        result.height = image.getHeight();
+        
+        ByteBuffer bb = ByteBuffer.allocate( image.getWidth() * image.getHeight() * 4 );
+        bb.asIntBuffer().put( int_pixels_argb );
+        result.pixels_argb = bb.array();
+        
+        assert result.pixels_argb.length == result.width*result.height*4;
+        
+        return result;
+    }
+    
+    public static void SaveImageFromByteArrayARGB( ImageAsArrayHolder image_as_array, String path )
+    throws java.io.IOException
+    {
+        SaveImageFromByteArrayARGB( image_as_array.width, image_as_array.height, image_as_array.pixels_argb, path );
+    }
+    public static void SaveImageFromByteArrayARGB( int width, int height, byte[] pixels_argb, String path )
+    throws java.io.IOException
+    {
+        assert pixels_argb.length == width*height*4;
+        
         final String kImageType = "png";
+        
+        // If it's a directory, tack on 'output'.
+        // NOTE: The extension (.png) will be added by the next test.
+        while( new File( path ).isDirectory() )
+        {
+            path = path + System.getProperty("file.separator") + "output";
+        }
         
         // If it doesn't end with the right extension, add it on.
         if( !path.toLowerCase().endsWith( "." + kImageType.toLowerCase() ) )
@@ -61,71 +137,35 @@ public class ImageAsArray
             path = path + "." + kImageType;
         }
         
-        // If the file exists, bail!
-        File output_path = new File( path );
-        if( output_path.exists() )
-        {
-            throw new java.io.IOException( "File exists: " + path );
-        }
+        // Make sure the path is unique.
+        path = UniquePath( path );
         
-        BufferedImage image = ...;
+        // Copy the data into the image.
+        BufferedImage image = new BufferedImage( width, height, BufferedImage.TYPE_INT_RGB );
+        IntBuffer ib = IntBuffer.allocate( width*height );
+        ib.put( ByteBuffer.wrap( pixels_argb ).asIntBuffer() );
+        image.setRGB( 0, 0, width, height, ib.array(), 0, width );
+        
+        System.err.println( "[Saving image to \"" + path + "\"]" );
         ImageIO.write( image, kImageType, new File( path ) );
     }
     
     public static void main( String [] args )
+    throws java.io.IOException
     {
-        for( int i = 0; i < args.length; ++i )
+        ImageAsArrayHolder data = LoadImageAsByteArrayARGB( args[0] );
+        double [] totals = { 0,0,0,0 };
+        for( int i = 0; i < data.width*data.height; ++i )
         {
-            System.out.println( "args[" + i + "]: " + args[i] );
+            totals[0] += data.pixels_argb[ 4*i + 0 ];
+            totals[1] += data.pixels_argb[ 4*i + 1 ];
+            totals[2] += data.pixels_argb[ 4*i + 2 ];
+            totals[3] += data.pixels_argb[ 4*i + 3 ];
         }
-        
-        int length = Integer.parseInt( args[0] );
-        
-        IntBuffer buf = IntBuffer.allocate( length );
-        
-        boolean slow = false;
-        if( "slow".equals( args[1] ) ) slow = true;
-        System.out.println( "Slow: " + slow );
-        
-        for( int i = 0; i < length; ++i )
-        {
-            buf.put( i, 100 );
-        }
-        
-        long cputimenanos = 0;
-        if( slow )
-        {
-            cputimenanos = getCPUTimeNanos();
-            for( int i = 0; i < length; ++i )
-            {
-                buf.put( i, (int)( buf.get(i) * .7 ) );
-            }
-            cputimenanos = getCPUTimeNanos() - cputimenanos;
-        }
-        else
-        {
-            int[] arr = buf.array();
-            
-            cputimenanos = getCPUTimeNanos();
-            for( int i = 0; i < arr.length; ++i )
-            {
-                arr[i] *= .7;
-            }
-            cputimenanos = getCPUTimeNanos() - cputimenanos;
-        }
-        
-        // So that the above can't be optimized away.
-        // UPDATE: Didn't make a difference.
-        long sum = 0;
-        for( int i = 0; i < length; ++i )
-        {
-            sum += buf.get(i);
-        }
-        System.out.println( "sum: " + sum );
-        
-        System.out.println( "CPU time nanos: " + cputimenanos );
-        
-        DecimalFormat df = new DecimalFormat("#.#########");
-        System.out.println( "CPU time seconds: " + df.format( ((double)cputimenanos)*1e-9 ) );
+        System.out.println( "totals[0] aka A: " + totals[0] );
+        System.out.println( "totals[1] aka R: " + totals[1] );
+        System.out.println( "totals[2] aka G: " + totals[2] );
+        System.out.println( "totals[3] aka B: " + totals[3] );
+        SaveImageFromByteArrayARGB( data, args[1] );
     }
 }
