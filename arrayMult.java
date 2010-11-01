@@ -18,11 +18,19 @@ import java.text.*; // DecimalFormat
 
 public class arrayMult
 {
-    // http://nadeausoftware.com/articles/2008/03/java_tip_how_get_cpu_and_user_time_benchmarking
-    public static long getCPUTimeNanos( ) {
-        ThreadMXBean bean = ManagementFactory.getThreadMXBean( );
-        return bean.isCurrentThreadCpuTimeSupported( ) ?
-            bean.getCurrentThreadCpuTime( ) : 0L;
+    // From http://nadeausoftware.com/articles/2008/03/java_tip_how_get_cpu_and_user_time_benchmarking
+    public static long getCPUTimeNanos()
+    {
+        ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+        return
+            bean.isCurrentThreadCpuTimeSupported()
+            ? bean.getCurrentThreadCpuTime()
+            : 0L
+            ;
+    }
+    public static double getCPUTimeSeconds()
+    {
+        return (double)getCPUTimeNanos() * 1e-9;
     }
     
     public static void main( String [] args )
