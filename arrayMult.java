@@ -12,14 +12,14 @@ sum: 917504000
 CPU time seconds: 0.050273
 */
 
-import java.nio.*;
-import java.lang.management.*;
-import java.text.*;
+import java.nio.*; // IntBuffer, ByteBuffer
+import java.lang.management.*; // getCPUTimeNanos()
+import java.text.*; // DecimalFormat
 
 public class arrayMult
 {
     // http://nadeausoftware.com/articles/2008/03/java_tip_how_get_cpu_and_user_time_benchmarking
-    public static long getCpuTimeNanos( ) {
+    public static long getCPUTimeNanos( ) {
         ThreadMXBean bean = ManagementFactory.getThreadMXBean( );
         return bean.isCurrentThreadCpuTimeSupported( ) ?
             bean.getCurrentThreadCpuTime( ) : 0L;
@@ -48,23 +48,23 @@ public class arrayMult
         long cputimenanos = 0;
         if( slow )
         {
-            cputimenanos = getCpuTimeNanos();
+            cputimenanos = getCPUTimeNanos();
             for( int i = 0; i < length; ++i )
             {
                 buf.put( i, (int)( buf.get(i) * .7 ) );
             }
-            cputimenanos = getCpuTimeNanos() - cputimenanos;
+            cputimenanos = getCPUTimeNanos() - cputimenanos;
         }
         else
         {
             int[] arr = buf.array();
             
-            cputimenanos = getCpuTimeNanos();
+            cputimenanos = getCPUTimeNanos();
             for( int i = 0; i < arr.length; ++i )
             {
                 arr[i] *= .7;
             }
-            cputimenanos = getCpuTimeNanos() - cputimenanos;
+            cputimenanos = getCPUTimeNanos() - cputimenanos;
         }
         
         // So that the above can't be optimized away.
