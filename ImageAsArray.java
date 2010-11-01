@@ -81,7 +81,18 @@ public class ImageAsArray
         public int width;
         public int height;
         
-        public byte [] pixels_argb;
+        // 'pixels_ARGB' is an array with length width*height*4.
+        // Pixels are stored contiguously, first row 0, then row 1, etc.
+        // For each pixel, there is an int ranging from 0 to 255
+        // for alpha, red, green, blue, in that order.
+        // In other words, the pixel at row i and column j can be accessed:
+        // pixels_ARGB[ i*width + j + C ],
+        // where C is 0 for alpha, 1 for red, 2 for blue, and 3 for green.
+        //
+        // NOTE: Values above 255 cannot be represented in 8-bits-per-channel images.
+        //       Calling SaveImageFromByteArrayARGB() with such values will simply
+        //       ignore bits above the 8-th bit.  You have been warned.
+        public int [] pixels_ARGB;
         
         public ImageAsArrayHolder()
         {
@@ -98,16 +109,19 @@ public class ImageAsArray
         
         // Load the image file.
         BufferedImage image = ImageIO.read( new File( path ) );
-        int int_pixels_argb [] = image.getRGB( 0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth() );
+        int int_packed_pixels_ARGB [] = image.getRGB( 0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth() );
+        assert int_packed_pixels_ARGB.length == image.getWidth() * image.getHeight();
         
         result.width = image.getWidth();
         result.height = image.getHeight();
-        
-        ByteBuffer bb = ByteBuffer.allocate( image.getWidth() * image.getHeight() * 4 );
-        bb.asIntBuffer().put( int_pixels_argb );
-        result.pixels_argb = bb.array();
-        
-        assert result.pixels_argb.length == result.width*result.height*4;
+        result.pixels_ARGB = new int[ result.width * result.height * 4 ];
+        for( int i = 0; i < int_packed_pixels_ARGB.length; ++i )
+        {
+            result.pixels_ARGB[ 4*i + 0 ] = ( int_packed_pixels_ARGB[ i ] & 0xFF000000 ) >> 24;
+            result.pixels_ARGB[ 4*i + 1 ] = ( int_packed_pixels_ARGB[ i ] & 0x00FF0000 ) >> 16;
+            result.pixels_ARGB[ 4*i + 2 ] = ( int_packed_pixels_ARGB[ i ] & 0x0000FF00 ) >> 8;
+            result.pixels_ARGB[ 4*i + 3 ] = ( int_packed_pixels_ARGB[ i ] & 0x000000FF );
+        }
         
         return result;
     }
@@ -115,12 +129,12 @@ public class ImageAsArray
     public static void SaveImageFromByteArrayARGB( ImageAsArrayHolder image_as_array, String path )
     throws java.io.IOException
     {
-        SaveImageFromByteArrayARGB( image_as_array.width, image_as_array.height, image_as_array.pixels_argb, path );
+        SaveImageFromByteArrayARGB( image_as_array.width, image_as_array.height, image_as_array.pixels_ARGB, path );
     }
-    public static void SaveImageFromByteArrayARGB( int width, int height, byte[] pixels_argb, String path )
+    public static void SaveImageFromByteArrayARGB( int width, int height, int[] pixels_ARGB, String path )
     throws java.io.IOException
     {
-        assert pixels_argb.length == width*height*4;
+        assert pixels_ARGB.length == width*height*4;
         
         final String kImageType = "png";
         
@@ -142,9 +156,21 @@ public class ImageAsArray
         
         // Copy the data into the image.
         BufferedImage image = new BufferedImage( width, height, BufferedImage.TYPE_INT_RGB );
-        IntBuffer ib = IntBuffer.allocate( width*height );
-        ib.put( ByteBuffer.wrap( pixels_argb ).asIntBuffer() );
-        image.setRGB( 0, 0, width, height, ib.array(), 0, width );
+        
+        int int_packed_pixels_ARGB [] = new int[ width*height ];
+        for( int i = 0; i < int_packed_pixels_ARGB.length; ++i )
+        {
+            int_packed_pixels_ARGB[ i ] =
+                (( pixels_ARGB[ 4*i + 0 ] & 0x000000FF ) << 24 )
+                |
+                (( pixels_ARGB[ 4*i + 1 ] & 0x000000FF ) << 16 )
+                |
+                (( pixels_ARGB[ 4*i + 2 ] & 0x000000FF ) << 8 )
+                |
+                (( pixels_ARGB[ 4*i + 3 ] & 0x000000FF ) )
+                ;
+        }
+        image.setRGB( 0, 0, width, height, int_packed_pixels_ARGB, 0, width );
         
         System.err.println( "[Saving image to \"" + path + "\"]" );
         ImageIO.write( image, kImageType, new File( path ) );
@@ -154,14 +180,15 @@ public class ImageAsArray
     throws java.io.IOException
     {
         ImageAsArrayHolder data = LoadImageAsByteArrayARGB( args[0] );
-        double [] totals = { 0,0,0,0 };
+        int [] totals = { 0,0,0,0 };
         for( int i = 0; i < data.width*data.height; ++i )
         {
-            totals[0] += data.pixels_argb[ 4*i + 0 ];
-            totals[1] += data.pixels_argb[ 4*i + 1 ];
-            totals[2] += data.pixels_argb[ 4*i + 2 ];
-            totals[3] += data.pixels_argb[ 4*i + 3 ];
+            totals[0] += data.pixels_ARGB[ 4*i + 0 ];
+            totals[1] += data.pixels_ARGB[ 4*i + 1 ];
+            totals[2] += data.pixels_ARGB[ 4*i + 2 ];
+            totals[3] += data.pixels_ARGB[ 4*i + 3 ];
         }
+        System.out.println( "total number of pixels: " + data.width*data.height );
         System.out.println( "totals[0] aka A: " + totals[0] );
         System.out.println( "totals[1] aka R: " + totals[1] );
         System.out.println( "totals[2] aka G: " + totals[2] );
