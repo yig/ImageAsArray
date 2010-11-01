@@ -92,6 +92,9 @@ public class ImageAsArray
         // NOTE: Values above 255 cannot be represented in 8-bits-per-channel images.
         //       Calling SaveImageFromByteArrayARGB() with such values will simply
         //       ignore bits above the 8-th bit.  You have been warned.
+        //
+        // NOTE: This would be more naturally implemented using unsigned bytes,
+        //       but Java doesn't support them.
         public int [] pixels_ARGB;
         
         public ImageAsArrayHolder()
@@ -117,10 +120,10 @@ public class ImageAsArray
         result.pixels_ARGB = new int[ result.width * result.height * 4 ];
         for( int i = 0; i < int_packed_pixels_ARGB.length; ++i )
         {
-            result.pixels_ARGB[ 4*i + 0 ] = ( int_packed_pixels_ARGB[ i ] & 0xFF000000 ) >> 24;
-            result.pixels_ARGB[ 4*i + 1 ] = ( int_packed_pixels_ARGB[ i ] & 0x00FF0000 ) >> 16;
-            result.pixels_ARGB[ 4*i + 2 ] = ( int_packed_pixels_ARGB[ i ] & 0x0000FF00 ) >> 8;
-            result.pixels_ARGB[ 4*i + 3 ] = ( int_packed_pixels_ARGB[ i ] & 0x000000FF );
+            result.pixels_ARGB[ 4*i + 0 ] = ( int_packed_pixels_ARGB[ i ] >> 24 ) & 0x000000FF;
+            result.pixels_ARGB[ 4*i + 1 ] = ( int_packed_pixels_ARGB[ i ] >> 16 ) & 0x000000FF;
+            result.pixels_ARGB[ 4*i + 2 ] = ( int_packed_pixels_ARGB[ i ] >> 8 ) & 0x000000FF;
+            result.pixels_ARGB[ 4*i + 3 ] = ( int_packed_pixels_ARGB[ i ] ) & 0x000000FF;
         }
         
         return result;
@@ -188,6 +191,7 @@ public class ImageAsArray
             totals[2] += data.pixels_ARGB[ 4*i + 2 ];
             totals[3] += data.pixels_ARGB[ 4*i + 3 ];
         }
+        System.out.println( "image( 0,0 ).a, r, b, g: " + data.pixels_ARGB[0] + ", " + data.pixels_ARGB[1] + ", " + data.pixels_ARGB[2] + ", " + data.pixels_ARGB[3] );
         System.out.println( "total number of pixels: " + data.width*data.height );
         System.out.println( "totals[0] aka A: " + totals[0] );
         System.out.println( "totals[1] aka R: " + totals[1] );
