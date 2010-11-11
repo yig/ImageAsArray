@@ -45,7 +45,7 @@ public class ImageAsArray
         // For each pixel, there is an int ranging from 0 to 255
         // for alpha, red, green, blue, in that order.
         // In other words, the pixel at row i and column j can be accessed:
-        // pixels_ARGB[ i*width + j + C ],
+        // pixels_ARGB[ ( i*width + j )*4 + C ],
         // where C is 0 for alpha, 1 for red, 2 for blue, and 3 for green.
         //
         // NOTE: Values above 255 cannot be represented in 8-bits-per-channel images.
