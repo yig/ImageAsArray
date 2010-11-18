@@ -56,10 +56,32 @@ public class ImageAsArray
         //       but Java doesn't support them.
         public int [] pixels_ARGB;
         
+        public int get( int i, int j, int channel )
+        {
+            return this.pixels_ARGB[ ( i*this.width + j )*4 + channel ];
+        }
+        public void set( int i, int j, int channel, int value )
+        {
+            // assert value >= 0 && value <= 255;
+            this.pixels_ARGB[ ( i*this.width + j )*4 + channel ] = value;
+        }
+        
         public ImageAsArrayHolder()
         {
             width = -1;
             height = -1;
+        }
+        
+        public ImageAsArrayHolder( ImageAsArrayHolder copy_constructor )
+        {
+            this.width = copy_constructor.width;
+            this.height = copy_constructor.height;
+            this.pixels_ARGB = new int[ copy_constructor.pixels_ARGB.length ];
+            
+            for( int i = 0; i < this.pixels_ARGB.length; ++i )
+            {
+                this.pixels_ARGB[ i ] = copy_constructor.pixels_ARGB[ i ];
+            }
         }
     }
     public static ImageAsArrayHolder LoadImageAsByteArrayARGB( String path )
