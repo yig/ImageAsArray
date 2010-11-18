@@ -12,6 +12,16 @@ public class Convolve
     {
         ImageAsArray.ImageAsArrayHolder data = ImageAsArray.LoadImageAsByteArrayARGB( args[0] );
         /*
+        data.width = 3;
+        data.height = 3;
+        data.pixels_ARGB = new int[ 3*3*4 ];
+        for( int i = 0; i < data.pixels_ARGB.length; ++i )
+        {
+            data.pixels_ARGB[ i ] = 255;
+        }
+        */
+        
+        /*
         // Convert to greyscale.
         for( int i = 0; i < data.width*data.height; ++i )
         {
@@ -30,12 +40,17 @@ public class Convolve
         for( int i = 0; i < 9; ++i )
         {
             kernel[ i ] = Integer.parseInt( args[ i+2 ] );
+            System.out.println( "kernel[ " + i + " ]: " + kernel[i] );
         }
         
         ImageAsArray.ImageAsArrayHolder output = new ImageAsArray.ImageAsArrayHolder( data );
+        for( int i = 0; i < output.pixels_ARGB.length; ++i )
+        {
+            output.pixels_ARGB[ i ] = 255;
+        }
         
-        for( int col = 0; col < data.width; ++col )
-        for( int row = 0; row < data.height; ++row )
+        for( int col = 1; col < data.width-1; ++col )
+        for( int row = 1; row < data.height-1; ++row )
         {
             for( int channel = 1; channel < 4; ++channel )
             {
@@ -63,11 +78,14 @@ public class Convolve
         assert row1 >= 0;
         
         int sum = 0;
-        for( int i = col0; i < col1; ++i )
-        for( int j = row0; j < row1; ++j )
+        for( int i = col0; i <= col1; ++i )
+        for( int j = row0; j <= row1; ++j )
         {
+            // System.out.println( "sum += " + data.get( row+j, col+i, channel ) + " * " + kernel[ 1+i + (1+j)*3 ] );
             sum += data.get( row+j, col+i, channel ) * kernel[ 1+i + (1+j)*3 ];
         }
+        
+        // System.out.println( "sum: " + sum );
         
         // return sum;
         return Math.min( Math.max( sum, 0 ), 255 );
