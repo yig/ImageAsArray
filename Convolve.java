@@ -39,7 +39,7 @@ public class Convolve
         {
             for( int channel = 1; channel < 4; ++channel )
             {
-                output.pixels_ARGB[ 4*( col + row*data.width ) + channel ] = ConvolveAt( kernel, data, col, row, channel );
+                output.set( row, col, channel, ConvolveAt( kernel, data, col, row, channel ) );
             }
         }
         
@@ -66,7 +66,7 @@ public class Convolve
         for( int i = col0; i < col1; ++i )
         for( int j = row0; j < row1; ++j )
         {
-            sum += data.pixels_ARGB[ 4*( col+i + (row+j)*data.width ) + channel ] * kernel[ 1+i + (1+j)*3 ];
+            sum += data.get( row+j, col+i, channel ) * kernel[ 1+i + (1+j)*3 ];
         }
         
         // return sum;
