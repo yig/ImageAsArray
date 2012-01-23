@@ -1,4 +1,4 @@
-// I, Yotam Gingold, the author of this file, release it to the public domain.
+// I, Yotam Gingold, the author of this file, release it into the public domain.
 
 /*
 javac Convolve.java
