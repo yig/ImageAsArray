@@ -2,8 +2,8 @@
 
 /*
 javac Convolve.java
-java -classpath . Convolve input.png output.png kernel00 kernel01 kernel02 kernel10 kernel11 kernel12 kernel20 kernel21 kernel22
-java -classpath . Convolve /Users/yotam/Work/TAU/teaching/graphics\ 2010\ fall/web/hw/ex1_examples_files/text.jpg lap.png -1 -1 -1 -1 8 -1 -1 -1 -1
+USAGE: java -classpath . Convolve input.png output.png kernel00 kernel01 kernel02 kernel10 kernel11 kernel12 kernel20 kernel21 kernel22
+EXAMPLE: java -classpath . Convolve input.jpg laplacian_edge_detect.png -1 -1 -1 -1 8 -1 -1 -1 -1
 */
 
 public class Convolve
