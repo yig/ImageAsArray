@@ -1,0 +1,19 @@
+Author: Yotam Gingold <yotam (strudel) yotamgingold.com>
+License: Public Domain.  (I, Yotam Gingold, the author, release this code into the public domain.)
+GitHub: https://github.com/yig/ImageAsArray
+
+ImageAsArray.java:
+    A java file with helpful (static) functions for loading and saving
+    images in Java and accessing the image data as an array.
+    Because Java does not have an 'unsigned byte' type, the code converts each
+    pixel into four int's (alpha, red, green, blue), rather than bytes.
+    See ImageAsArray.main() for a simple example that prints out the top-left
+    pixel color as well as some image statistics (try it on red.png, green.png,
+    and blue.png).
+
+Convolve.java:
+    A demo that applies a 3x3 convolution to an image.
+
+tests:
+    This directory contains a tiny Java-versus-C performance test (Java wins?!).
+    It also contains a test file for some file-path parsing.
